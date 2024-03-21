@@ -6,9 +6,9 @@ import (
 )
 
 func LoadConfigFromToml(filePath string) error {
-	Config = NewDefaultPortConfig()
+	config = NewDefaultConfig()
 	// 读取toml格式文件
-	_, err := toml.DecodeFile(filePath, Config)
+	_, err := toml.DecodeFile(filePath, config)
 	if err != nil {
 		return fmt.Errorf("load config from file error, path: %s, %s", filePath, err)
 	}

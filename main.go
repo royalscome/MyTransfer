@@ -2,10 +2,21 @@ package main
 
 import (
 	"MyTransfer/apps/broadcast"
+	"MyTransfer/conf"
+)
+
+var (
+	config   *conf.Config
+	filePath string = "etc/config.toml"
 )
 
 func main() {
-	err := broadcast.StartBroadcast()
+	// 加载配置文件
+	err := conf.LoadConfigFromToml(filePath)
+	config = conf.C()
+
+	// 开始广播
+	err = broadcast.StartBroadcast(config.UDP)
 	if err != nil {
 		panic(err)
 		return

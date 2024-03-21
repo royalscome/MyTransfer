@@ -10,12 +10,7 @@ import (
 )
 
 // getMyDeviceIP 获取当前设备所有192.168开头的地址
-func getMyDeviceIP(filePath string) error {
-	// 加载配置文件
-	err := conf.LoadConfigFromToml(filePath)
-	if err != nil {
-		return err
-	}
+func getMyDeviceIP(udp *conf.UDP) error {
 	// 设备ip数量大致在五个以内
 	MyDevices = make([]DeviceInfo, 5)
 
@@ -30,7 +25,7 @@ func getMyDeviceIP(filePath string) error {
 		if err != nil {
 			return err
 		}
-		err = processAddresses(addrs)
+		err = processAddresses(addrs, udp)
 		if err != nil {
 			return err
 		}
@@ -41,12 +36,12 @@ func getMyDeviceIP(filePath string) error {
 	return nil
 }
 
-func processAddresses(addrs []net.Addr) error {
+func processAddresses(addrs []net.Addr, udp *conf.UDP) error {
 	for _, addr := range addrs {
 		if isLocalIPv4(addr) {
 			MyDevices = append(MyDevices, DeviceInfo{
 				IP:   addr.(*net.IPNet).IP.String(),
-				Port: *conf.Config,
+				Port: udp.Port,
 				Tag:  "me",
 			})
 		}
@@ -61,12 +56,12 @@ func isLocalIPv4(addr net.Addr) bool {
 }
 
 // StartBroadcast 开始广播
-func StartBroadcast() error {
-	err := getMyDeviceIP("etc/config.toml")
+func StartBroadcast(udp *conf.UDP) error {
+	err := getMyDeviceIP(udp)
 	if err != nil {
 		return err
 	}
-	port, err := strconv.Atoi(conf.Config.Port)
+	port, err := strconv.Atoi(udp.Port)
 	if err != nil {
 		return err
 	}

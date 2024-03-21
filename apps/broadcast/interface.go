@@ -1,7 +1,6 @@
 package broadcast
 
 import (
-	"MyTransfer/conf"
 	"fmt"
 )
 
@@ -16,13 +15,13 @@ var (
 
 // DeviceInfo 设备信息
 type DeviceInfo struct {
-	IP   string          // 设备IP地址
-	Port conf.PortConfig // 设备端口号
-	Tag  string          // 设备标识符
+	IP   string // 设备IP地址
+	Port string // 设备端口号
+	Tag  string // 设备标识符
 }
 
 // 返回本机信息字符串格式
 // usage: DeviceInfo{}.String()
 func (d *DeviceInfo) String() string {
-	return fmt.Sprintf("%s:%s", d.IP, d.Port.Port)
+	return fmt.Sprintf("%s:%s", d.IP, d.Port)
 }
