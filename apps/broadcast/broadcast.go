@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+var (
+	AppName = "broadcast"
+)
+
 // getMyDeviceIP 获取当前设备所有192.168开头的地址
 func getMyDeviceIP(udp *conf.UDP) error {
 	// 设备ip数量大致在五个以内
@@ -82,12 +86,15 @@ func StartBroadcast(udp *conf.UDP) error {
 			return
 		}
 	}()
+	//wg := sync.WaitGroup{}
+	//wg.Add(1)
 	go func() {
 		for {
 			data := make([]byte, 4096)
 			n, remoteAddr, err := conn.ReadFromUDP(data)
 			if err != nil {
 				fmt.Println(err)
+				//wg.Done()
 				return
 			}
 			//fmt.Println(remoteAddr, myDeviceIpv4Address)
@@ -102,18 +109,33 @@ func StartBroadcast(udp *conf.UDP) error {
 			}
 
 			if isMyDevice {
-				fmt.Println("接收到本机消息")
+				//fmt.Println("接收到本机消息")
 			} else {
 				fmt.Printf("Received from address: %s data: %s\n", remoteAddr, data[:n])
 			}
 		}
 	}()
 
+	//go func() {
+	//	for {
+	//		_, err = conn.WriteToUDP([]byte("Hello from broadcaster"), broadcastAddress)
+	//		if err != nil {
+	//			fmt.Println(err)
+	//			//wg.Done()
+	//			return
+	//		}
+	//		time.Sleep(1 * time.Second)
+	//	}
+	//}()
 	for {
 		_, err = conn.WriteToUDP([]byte("Hello from broadcaster"), broadcastAddress)
 		if err != nil {
+			fmt.Println(err)
+			//wg.Done()
 			return err
 		}
 		time.Sleep(1 * time.Second)
 	}
+	//wg.Wait()
+	return nil
 }
