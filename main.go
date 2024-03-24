@@ -2,6 +2,7 @@ package main
 
 import (
 	"MyTransfer/apps"
+	_ "MyTransfer/apps/all"
 	"MyTransfer/apps/broadcast"
 	"MyTransfer/conf"
 	"MyTransfer/protocol"

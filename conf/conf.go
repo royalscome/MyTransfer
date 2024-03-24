@@ -39,6 +39,7 @@ func NewDefaultTCP() *TCP {
 }
 
 func (t *TCP) HttpAddr() string {
+	fmt.Printf("%s:%s\n", t.Host, t.Port)
 	return fmt.Sprintf("%s:%s", t.Host, t.Port)
 }
 

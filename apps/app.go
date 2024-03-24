@@ -13,8 +13,8 @@ import (
 
 var (
 	broadcastService broadcast.Service
-	implApps         map[string]ImplService
-	ginApps          map[string]GinService
+	implApps         = map[string]ImplService{}
+	ginApps          = map[string]GinService{}
 )
 
 func RegistryImpl(svc ImplService) {
