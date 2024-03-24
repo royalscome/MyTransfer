@@ -11,9 +11,10 @@ func C() *Config {
 }
 
 type Config struct {
-	UDP *UDP `toml:"udp"`
-	TCP *TCP `toml:"tcp"`
-	Log *Log `toml:"log"`
+	UDP  *UDP  `toml:"udp"`
+	TCP  *TCP  `toml:"tcp"`
+	Log  *Log  `toml:"log"`
+	HTTP *HTTP `toml:"http"`
 }
 
 type UDP struct {
@@ -38,9 +39,19 @@ func NewDefaultTCP() *TCP {
 	}
 }
 
-func (t *TCP) HttpAddr() string {
-	fmt.Printf("%s:%s\n", t.Host, t.Port)
+type HTTP struct {
+	Host string `toml:"host" env:"APP_HOST"`
+	Port string `toml:"port" env:"APP_PORT"`
+}
+
+func (t *HTTP) HttpAddr() string {
 	return fmt.Sprintf("%s:%s", t.Host, t.Port)
+}
+
+func NewDefaultHTTP() *HTTP {
+	return &HTTP{
+		Port: "",
+	}
 }
 
 // Log todo
@@ -62,8 +73,9 @@ func NewDefaultLog() *Log {
 
 func NewDefaultConfig() *Config {
 	return &Config{
-		UDP: NewDefaultUDP(),
-		TCP: NewDefaultTCP(),
-		Log: NewDefaultLog(),
+		UDP:  NewDefaultUDP(),
+		TCP:  NewDefaultTCP(),
+		Log:  NewDefaultLog(),
+		HTTP: NewDefaultHTTP(),
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"MyTransfer/apps"
 	_ "MyTransfer/apps/all"
-	"MyTransfer/apps/broadcast"
 	"MyTransfer/conf"
 	"MyTransfer/protocol"
 	"fmt"
@@ -22,17 +21,22 @@ var (
 // 用于管理所有需要启动的服务
 type manage struct {
 	http *protocol.HttpService
+	udp  *protocol.UDPService
 	l    logger.Logger
 }
 
 func newManage() *manage {
 	return &manage{
 		http: protocol.NewHttpService(),
+		udp:  protocol.NewUDPService(),
 		l:    zap.L().Named("MAIN"),
 	}
 }
 
 func (m *manage) Start() error {
+	go func() {
+		m.udp.Start()
+	}()
 	return m.http.Start()
 }
 
@@ -42,6 +46,7 @@ func (m *manage) waitStop(ch <-chan os.Signal) {
 		switch v {
 		default:
 			m.l.Infof("received signal %s", v)
+			m.udp.Stop()
 			m.http.Stop()
 		}
 	}
@@ -88,19 +93,10 @@ func main() {
 	// 加载配置文件
 	err := conf.LoadConfigFromToml(filePath)
 	config = conf.C()
-
-	// 开始广播
-	go func() {
-		err = broadcast.StartBroadcast(config.UDP)
-		if err != nil {
-			panic(err)
-		}
-	}()
 	//return
 
 	// 开启http服务
 	// 加载日志
-	fmt.Println("log")
 	if err = loadGlobalLogger(); err != nil {
 		panic(err)
 	}

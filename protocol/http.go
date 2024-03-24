@@ -21,7 +21,7 @@ func NewHttpService() *HttpService {
 		WriteTimeout:      60 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		MaxHeaderBytes:    1 << 20, //1M
-		Addr:              conf.C().TCP.HttpAddr(),
+		Addr:              conf.C().HTTP.HttpAddr(),
 		Handler:           r,
 	}
 	return &HttpService{
