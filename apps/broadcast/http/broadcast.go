@@ -2,7 +2,6 @@ package http
 
 import (
 	"MyTransfer/apps/broadcast"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/infraboard/mcube/http/response"
 )
@@ -18,7 +17,6 @@ func (h *Handler) sendMessageUseUDP(c *gin.Context) {
 		response.Failed(c.Writer, err)
 		return
 	}
-	fmt.Println(ins)
 	if err := h.svc.SendMessageUseUDP(h.c, ins); err != nil {
 		response.Failed(c.Writer, err)
 		return

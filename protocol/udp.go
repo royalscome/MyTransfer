@@ -67,7 +67,6 @@ func (u *UDPService) Start() error {
 					u.l.Errorf("receive message error: %v", err)
 					return
 				}
-				//fmt.Println(remoteAddr, myDeviceIpv4Address)
 				// 如果接收到的消息是本机发送的消息，则不处理
 				// 循环比对本机的所有IP地址，如果接收到的消息是本机的IP地址，则不处理
 				// 如果接收到的消息不是本机的IP地址，则处理
