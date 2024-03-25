@@ -4,6 +4,7 @@ import (
 	"MyTransfer/apps/broadcast"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"net"
 )
 
 // IOC容器层：管理所有的服务的实例
@@ -51,7 +52,7 @@ type ImplService interface {
 type GinService interface {
 	Registry(r gin.IRouter)
 	Name() string
-	Config()
+	Config(c interface{})
 }
 
 // InitImpl 用于初始化 注册到IOC容器里面的所有服务
@@ -68,9 +69,9 @@ func LoadedGinApps() (names []string) {
 	return names
 }
 
-func InitGin(r gin.IRouter) {
+func InitGin(r gin.IRouter, c *net.UDPConn) {
 	for _, v := range ginApps {
-		v.Config()
+		v.Config(c)
 	}
 	for _, v := range ginApps {
 		v.Registry(r)

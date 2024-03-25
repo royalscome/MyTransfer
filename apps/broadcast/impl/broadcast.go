@@ -5,6 +5,7 @@ import (
 	"MyTransfer/apps/broadcast"
 	"github.com/infraboard/mcube/logger"
 	"github.com/infraboard/mcube/logger/zap"
+	"net"
 )
 
 // 接口实现的静态检查
@@ -33,6 +34,17 @@ func (i *BroadcastServiceImpl) Name() string {
 
 func (i *BroadcastServiceImpl) QueryOnlineDevices() []broadcast.DeviceInfo {
 	return broadcast.OnlineDevices
+}
+
+func (i *BroadcastServiceImpl) SendMessageUseUDP(conn *net.UDPConn, UDPMessage *broadcast.UDPMessage) error {
+	addr, err := net.ResolveUDPAddr("udp", "192.168.1.198:1998")
+	if err != nil {
+		return err
+	}
+	if _, err := conn.WriteToUDP([]byte(UDPMessage.Message), addr); err != nil {
+		return err
+	}
+	return nil
 }
 
 func init() {

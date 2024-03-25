@@ -19,6 +19,10 @@ type UDPService struct {
 	stop    chan bool
 }
 
+func (s *UDPService) GetConn() *net.UDPConn {
+	return s.conn
+}
+
 func NewUDPService() *UDPService {
 	port, err := strconv.Atoi(conf.C().UDP.Port)
 	if err != nil {
@@ -75,7 +79,7 @@ func (u *UDPService) Start() error {
 				}
 
 				if isMyDevice {
-					fmt.Println("接收到本机消息")
+					fmt.Println("接收到本机消息", remoteAddr, string(data[:n]))
 				} else {
 					fmt.Printf("Received from address: %s data: %s\n", remoteAddr, data[:n])
 				}
@@ -92,7 +96,7 @@ func (u *UDPService) Start() error {
 				u.l.Warnf("keep alive message send error: %s", err)
 				return err
 			}
-			time.Sleep(2 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}
 }

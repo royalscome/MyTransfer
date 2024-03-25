@@ -37,7 +37,7 @@ func (m *manage) Start() error {
 	go func() {
 		m.udp.Start()
 	}()
-	return m.http.Start()
+	return m.http.Start(m.udp.GetConn())
 }
 
 // Stop 处理来自外部的终端信号

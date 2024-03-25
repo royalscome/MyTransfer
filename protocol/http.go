@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/infraboard/mcube/logger"
 	"github.com/infraboard/mcube/logger/zap"
+	"net"
 	"net/http"
 	"time"
 )
@@ -37,9 +38,9 @@ type HttpService struct {
 	r      gin.IRouter
 }
 
-func (s *HttpService) Start() error {
+func (s *HttpService) Start(udpConn *net.UDPConn) error {
 	// 加载Handler
-	apps.InitGin(s.r)
+	apps.InitGin(s.r, udpConn)
 
 	// 已加载App的日志信息
 	apps := apps.LoadedGinApps()
