@@ -25,3 +25,24 @@ type DeviceInfo struct {
 func (d *DeviceInfo) String() string {
 	return fmt.Sprintf("%s:%s", d.IP, d.Port)
 }
+
+// MessageType 接收的消息类型
+type MessageType int
+
+const (
+	ConfirmType MessageType = iota // 通知对方确认是否接收文件
+	AcceptType
+	RefuseType
+)
+
+type MessageData struct {
+	Type    MessageType `json:"type"`
+	Message string      `json:"message"`
+}
+
+func NewDefaultMessageData() *MessageData {
+	return &MessageData{
+		Type:    ConfirmType,
+		Message: "",
+	}
+}

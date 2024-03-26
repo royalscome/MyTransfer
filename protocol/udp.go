@@ -3,6 +3,7 @@ package protocol
 import (
 	"MyTransfer/apps/broadcast"
 	"MyTransfer/conf"
+	"encoding/json"
 	"fmt"
 	"github.com/infraboard/mcube/logger"
 	"github.com/infraboard/mcube/logger/zap"
@@ -153,4 +154,14 @@ func processAddresses(addrs []net.Addr, myDevices *[]broadcast.DeviceInfo, port 
 func isLocalIPv4(addr net.Addr) bool {
 	ipnet, ok := addr.(*net.IPNet)
 	return ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil && strings.HasPrefix(ipnet.IP.String(), "192.168")
+}
+
+// JudgeMessageType 根据接收到的消息判断后续操作
+func JudgeMessageType(message string) error {
+	var marshalMessage = broadcast.NewDefaultMessageData()
+	err := json.Unmarshal([]byte(message), &marshalMessage)
+	if err != nil {
+		return err
+	}
+	return nil
 }
