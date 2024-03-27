@@ -32,12 +32,15 @@ func (i *BroadcastServiceImpl) Name() string {
 	return broadcast.AppName
 }
 
-func (i *BroadcastServiceImpl) QueryOnlineDevices() []broadcast.DeviceInfo {
-	return broadcast.OnlineDevices
+func (i *BroadcastServiceImpl) QueryOnlineDevices() *broadcast.OnlineDevicesData {
+	return &broadcast.OnlineDevicesData{
+		DeviceList: broadcast.OnlineDevices,
+		Total:      len(broadcast.OnlineDevices),
+	}
 }
 
 func (i *BroadcastServiceImpl) SendMessageUseUDP(conn *net.UDPConn, UDPMessage *broadcast.UDPMessage) error {
-	addr, err := net.ResolveUDPAddr("udp", "192.168.1.198:1998")
+	addr, err := net.ResolveUDPAddr("udp", UDPMessage.Address)
 	if err != nil {
 		return err
 	}

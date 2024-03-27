@@ -4,6 +4,7 @@ import (
 	"MyTransfer/apps/broadcast"
 	"MyTransfer/conf"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/infraboard/mcube/logger"
 	"github.com/infraboard/mcube/logger/zap"
@@ -80,8 +81,16 @@ func (u *UDPService) Start() error {
 
 				if isMyDevice {
 					fmt.Println("接收到本机消息", remoteAddr, string(data[:n]))
+					err = JudgeMessageType(string(data[:n]), remoteAddr)
+					if err != nil {
+						u.l.Warnf("message error: %s", err)
+					}
 				} else {
 					fmt.Printf("Received from address: %s data: %s\n", remoteAddr, data[:n])
+					err = JudgeMessageType(string(data[:n]), remoteAddr)
+					if err != nil {
+						u.l.Warnf("message error: %s", err)
+					}
 				}
 			}
 		}
@@ -91,7 +100,15 @@ func (u *UDPService) Start() error {
 		case <-u.stop:
 			return nil
 		default:
-			_, err = u.conn.WriteToUDP([]byte("Hello from broadcaster"), u.address)
+			aliveMessage := &broadcast.MessageData{
+				Type:    broadcast.AliveType,
+				Message: "",
+			}
+			message, err := json.Marshal(aliveMessage)
+			if err != nil {
+				u.l.Warnf("marshal error: %s", err)
+			}
+			_, err = u.conn.WriteToUDP([]byte(message), u.address)
 			if err != nil {
 				u.l.Warnf("keep alive message send error: %s", err)
 				return err
@@ -157,11 +174,43 @@ func isLocalIPv4(addr net.Addr) bool {
 }
 
 // JudgeMessageType 根据接收到的消息判断后续操作
-func JudgeMessageType(message string) error {
+func JudgeMessageType(message string, address *net.UDPAddr) error {
 	var marshalMessage = broadcast.NewDefaultMessageData()
 	err := json.Unmarshal([]byte(message), &marshalMessage)
 	if err != nil {
 		return err
 	}
+	switch marshalMessage.Type {
+	case broadcast.AliveType:
+		keepAlive(address)
+	case broadcast.ConfirmType:
+	case broadcast.AcceptType:
+	case broadcast.RefuseType:
+	default:
+		return errors.New("MessageType not validate")
+	}
 	return nil
+}
+
+func keepAlive(address *net.UDPAddr) {
+	// 如果设备地址已存在列表中说明需要新增
+	var isExist bool = false
+	for _, device := range broadcast.OnlineDevices {
+		if device.String() == address.String() {
+			isExist = true
+			device.ResetTimer()
+		}
+	}
+	if !isExist {
+		// 如果状态为false说明设备初次出现，新增一个并且开启定时器
+		newDevice := broadcast.DeviceInfo{
+			IP:     address.IP.String(),
+			Port:   strconv.Itoa(address.Port),
+			Tag:    "other",
+			Status: true,
+		}
+		broadcast.OnlineDevices = append(broadcast.OnlineDevices, newDevice)
+		newDevice.StartTimer()
+	}
+
 }

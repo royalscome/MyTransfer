@@ -4,7 +4,7 @@ import "net"
 
 type Service interface {
 	// QueryOnlineDevices 查询在线设备
-	QueryOnlineDevices() []DeviceInfo
+	QueryOnlineDevices() *OnlineDevicesData
 	// SendMessageUseUDP 利用udp发送消息
 	SendMessageUseUDP(*net.UDPConn, *UDPMessage) error
 }
@@ -19,4 +19,9 @@ func NewUDPMessage() *UDPMessage {
 		Message: "",
 		Address: "",
 	}
+}
+
+type OnlineDevicesData struct {
+	DeviceList []DeviceInfo `json:"device_list"`
+	Total      int          `json:"total"`
 }

@@ -29,7 +29,7 @@ func (h *Handler) Config(c interface{}) {
 }
 
 func (h *Handler) Registry(r gin.IRouter) {
-	r.POST("/getOnlineDevices", h.queryOnlineDevices)
+	r.GET("/getDevices", h.queryOnlineDevices)
 	r.POST("/sendMessage", h.sendMessageUseUDP)
 }
 
