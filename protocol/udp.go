@@ -173,10 +173,18 @@ func isLocalIPv4(addr net.Addr) bool {
 	return ok && !ipnet.IP.IsLoopback() && ipnet.IP.To4() != nil && strings.HasPrefix(ipnet.IP.String(), "192.168")
 }
 
+func isValidJSON(s string) bool {
+	var js map[string]interface{}
+	return json.Unmarshal([]byte(s), &js) == nil
+}
+
 // JudgeMessageType 根据接收到的消息判断后续操作
 func JudgeMessageType(message string, address *net.UDPAddr) error {
+	if !isValidJSON(message) {
+		return errors.New("invalid JSON format")
+	}
 	var marshalMessage = broadcast.NewDefaultMessageData()
-	err := json.Unmarshal([]byte(message), &marshalMessage)
+	err := json.Unmarshal([]byte(message), marshalMessage)
 	if err != nil {
 		return err
 	}
