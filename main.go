@@ -3,15 +3,11 @@ package main
 import (
 	"MyTransfer/apps"
 	_ "MyTransfer/apps/all"
-	"MyTransfer/apps/websocket/impl"
 	"MyTransfer/conf"
 	"MyTransfer/protocol"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"github.com/infraboard/mcube/logger"
 	"github.com/infraboard/mcube/logger/zap"
-	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,22 +20,27 @@ var (
 
 // 用于管理所有需要启动的服务
 type manage struct {
-	http *protocol.HttpService
-	udp  *protocol.UDPService
-	l    logger.Logger
+	http      *protocol.HttpService
+	udp       *protocol.UDPService
+	websocket *protocol.WebSocketService
+	l         logger.Logger
 }
 
 func newManage() *manage {
 	return &manage{
-		http: protocol.NewHttpService(),
-		udp:  protocol.NewUDPService(),
-		l:    zap.L().Named("MAIN"),
+		http:      protocol.NewHttpService(),
+		udp:       protocol.NewUDPService(),
+		websocket: protocol.NewWebSocketService(),
+		l:         zap.L().Named("MAIN"),
 	}
 }
 
 func (m *manage) Start() error {
 	go func() {
-		m.udp.Start()
+		_ = m.udp.Start()
+	}()
+	go func() {
+		_ = m.websocket.Start()
 	}()
 	return m.http.Start(m.udp.GetConn())
 }
@@ -51,6 +52,7 @@ func (m *manage) waitStop(ch <-chan os.Signal) {
 		default:
 			m.l.Infof("received signal %s", v)
 			m.udp.Stop()
+			m.websocket.Stop()
 			m.http.Stop()
 		}
 	}
@@ -93,60 +95,10 @@ func loadGlobalLogger() error {
 	return nil
 }
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
-
-func handleConnections(w http.ResponseWriter, r *http.Request) {
-	// Upgrade initial GET request to a websocket
-	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Make sure we close the connection when the function returns
-	defer ws.Close()
-	// Initialize a new Connection
-	conn, err := impl.InitConnection(ws)
-	if err != nil {
-		log.Fatal("init connection:", err)
-	}
-
-	// Loop indefinitely
-	for {
-		// Read message from browser
-		msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-
-		// Print the message to the console
-		log.Printf("recv: %s", msg)
-
-		// TODO: Process the message
-		// For now, we'll just echo the same message back
-		processedMsg := msg
-
-		// Write message back to browser
-		err = conn.WriteMessage(processedMsg)
-		if err != nil {
-			log.Println("write:", err)
-			break
-		}
-	}
-}
-
 func main() {
 	// 加载配置文件
 	err := conf.LoadConfigFromToml(filePath)
 	config = conf.C()
-	http.HandleFunc("/ws", handleConnections)
-	log.Fatal(http.ListenAndServe(":2000", nil))
-	return
 
 	// 开启http服务
 	// 加载日志
