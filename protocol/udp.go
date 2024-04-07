@@ -2,6 +2,8 @@ package protocol
 
 import (
 	"MyTransfer/apps/broadcast"
+	"MyTransfer/apps/transfer"
+	"MyTransfer/apps/websocket/impl"
 	"MyTransfer/conf"
 	"encoding/json"
 	"errors"
@@ -48,7 +50,7 @@ func NewUDPService() *UDPService {
 	}
 }
 
-func (u *UDPService) Start() error {
+func (u *UDPService) Start(wsService *WebSocketService) error {
 	myDevices, err := getMyDeviceIP()
 	if err != nil {
 		return err
@@ -81,13 +83,13 @@ func (u *UDPService) Start() error {
 
 				if isMyDevice {
 					fmt.Println("接收到本机消息", remoteAddr, string(data[:n]))
-					err = JudgeMessageType(string(data[:n]), remoteAddr)
+					err = JudgeMessageType(string(data[:n]), remoteAddr, wsService.GetConn())
 					if err != nil {
 						u.l.Warnf("message error: %s", err)
 					}
 				} else {
 					fmt.Printf("Received from address: %s data: %s\n", remoteAddr, data[:n])
-					err = JudgeMessageType(string(data[:n]), remoteAddr)
+					err = JudgeMessageType(string(data[:n]), remoteAddr, wsService.GetConn())
 					if err != nil {
 						u.l.Warnf("message error: %s", err)
 					}
@@ -179,7 +181,7 @@ func isValidJSON(s string) bool {
 }
 
 // JudgeMessageType 根据接收到的消息判断后续操作
-func JudgeMessageType(message string, address *net.UDPAddr) error {
+func JudgeMessageType(message string, address *net.UDPAddr, conn *impl.Connection) error {
 	if !isValidJSON(message) {
 		return errors.New("invalid JSON format")
 	}
@@ -192,8 +194,13 @@ func JudgeMessageType(message string, address *net.UDPAddr) error {
 	case broadcast.AliveType:
 		keepAlive(address)
 	case broadcast.ConfirmType:
+		if err = confirmMsg([]byte(marshalMessage.Message), conn); err != nil {
+			return err
+		}
 	case broadcast.AcceptType:
+		acceptMsg()
 	case broadcast.RefuseType:
+		refuseMsg()
 	default:
 		return errors.New("MessageType not validate")
 	}
@@ -201,7 +208,7 @@ func JudgeMessageType(message string, address *net.UDPAddr) error {
 }
 
 func keepAlive(address *net.UDPAddr) {
-	// 如果设备地址已存在列表中说明需要新增
+	// 如果设备地址已存在列表中说明需要重置定时器
 	var isExist bool = false
 	for _, device := range broadcast.OnlineDevices {
 		if device.String() == address.String() {
@@ -221,4 +228,18 @@ func keepAlive(address *net.UDPAddr) {
 		newDevice.StartTimer()
 	}
 
+}
+
+func confirmMsg(data []byte, conn *impl.Connection) error {
+	//fmt.Println(conn)
+	return conn.WriteMessage(data)
+}
+
+func refuseMsg() {
+	fmt.Println("refuse")
+}
+
+func acceptMsg() {
+	fmt.Println("accept", conf.FilePath)
+	transfer.InitSendFromTcp(conf.FilePath)
 }

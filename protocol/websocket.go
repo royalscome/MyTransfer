@@ -3,6 +3,7 @@ package protocol
 import (
 	"MyTransfer/apps/websocket/impl"
 	"MyTransfer/conf"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/infraboard/mcube/logger"
@@ -31,7 +32,17 @@ func NewWebSocketService() *WebSocketService {
 
 type WebSocketService struct {
 	server *http.Server
+	conn   *impl.Connection
 	l      logger.Logger
+}
+
+type filePath struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+func (s *WebSocketService) GetConn() *impl.Connection {
+	return s.conn
 }
 
 func (s *WebSocketService) handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -43,15 +54,16 @@ func (s *WebSocketService) handleConnections(w http.ResponseWriter, r *http.Requ
 	// Make sure we close the connection when the function returns
 	defer ws.Close()
 	// Initialize a new Connection
-	conn, err := impl.InitConnection(ws)
+	s.conn, err = impl.InitConnection(ws)
+	//fmt.Println("handleConnections", s.GetConn())
 	if err != nil {
 		s.l.Fatal("init connection:", err)
 	}
-
+	var path filePath
 	// Loop indefinitely
 	for {
 		// Read message from browser
-		msg, err := conn.ReadMessage()
+		msg, err := s.conn.ReadMessage()
 		if err != nil {
 			s.l.Println("read:", err)
 			break
@@ -59,13 +71,19 @@ func (s *WebSocketService) handleConnections(w http.ResponseWriter, r *http.Requ
 
 		// Print the message to the console
 		s.l.Printf("recv: %s", msg)
+		_ = json.Unmarshal(msg, &path)
+		if path.Type == "start" {
+			conf.FilePath = path.Path
+		} else if path.Type == "keep" {
+
+		}
 
 		// TODO: Process the message
 		// For now, we'll just echo the same message back
 		processedMsg := msg
 
 		// Write message back to browser
-		err = conn.WriteMessage(processedMsg)
+		err = s.conn.WriteMessage(processedMsg)
 		if err != nil {
 			s.l.Println("write:", err)
 			break

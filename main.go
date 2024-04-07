@@ -37,7 +37,7 @@ func newManage() *manage {
 
 func (m *manage) Start() error {
 	go func() {
-		_ = m.udp.Start()
+		_ = m.udp.Start(m.websocket)
 	}()
 	go func() {
 		_ = m.websocket.Start()

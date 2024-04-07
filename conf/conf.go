@@ -3,7 +3,8 @@ package conf
 import "fmt"
 
 var (
-	config *Config
+	config   *Config
+	FilePath string
 )
 
 func C() *Config {
@@ -32,6 +33,11 @@ func NewDefaultUDP() *UDP {
 type TCP struct {
 	Host string `toml:"host" env:"APP_HOST"`
 	Port string `toml:"port" env:"APP_PORT"`
+}
+
+func (t *TCP) TcpAddr() string {
+	return fmt.Sprintf("%s:%s", t.Host, t.Port)
+
 }
 
 func NewDefaultTCP() *TCP {
